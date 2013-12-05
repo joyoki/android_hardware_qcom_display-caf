@@ -114,24 +114,19 @@ bool MDPComp::init(hwc_context_t *ctx) {
             sMaxPipesPerMixer = true;
     }
 
-    if(ctx->mMDP.panel != MIPI_CMD_PANEL) {
-        // Idle invalidation is not necessary on command mode panels
-        long idle_timeout = DEFAULT_IDLE_TIME;
-        if(property_get("debug.mdpcomp.idletime", property, NULL) > 0) {
-            if(atoi(property) != 0)
-                idle_timeout = atoi(property);
-        }
+    unsigned long idle_timeout = DEFAULT_IDLE_TIME;
+    if(property_get("debug.mdpcomp.idletime", property, NULL) > 0) {
+        if(atoi(property) != 0)
+            idle_timeout = atoi(property);
+    }
 
-        //create Idle Invalidator only when not disabled through property
-        if(idle_timeout != -1)
-            idleInvalidator = IdleInvalidator::getInstance();
+    //create Idle Invalidator
+    idleInvalidator = IdleInvalidator::getInstance();
 
-        if(idleInvalidator == NULL) {
-            ALOGE("%s: failed to instantiate idleInvalidator object",
-                  __FUNCTION__);
-        } else {
-            idleInvalidator->init(timeout_handler, ctx, idle_timeout);
-        }
+    if(idleInvalidator == NULL) {
+        ALOGE("%s: failed to instantiate idleInvalidator object", __FUNCTION__);
+    } else {
+        idleInvalidator->init(timeout_handler, ctx, idle_timeout);
     }
     return true;
 }
@@ -419,7 +414,7 @@ bool MDPComp::isFullFrameDoable(hwc_context_t *ctx,
 
     if(ctx->listStats[mDpy].needsAlphaScale
        && (ctx->mMDP.version < qdutils::MDSS_V5)
-       && ((ctx->listStats[mDpy].numAppLayers >2) || mDpy)){
+       && (ctx->listStats[mDpy].numAppLayers >2)){
         ALOGD_IF(isDebug(), "%s: frame needs alpha downscaling",__FUNCTION__);
         return false;
     }
